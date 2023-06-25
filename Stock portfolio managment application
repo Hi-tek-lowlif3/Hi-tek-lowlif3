@@ -1,0 +1,181 @@
+from tkinter import Tk, Label, Entry, Button, messagebox, filedialog
+
+
+class Stock:
+    def __init__(self, symbol, quantity, price):
+        self.symbol = symbol
+        self.quantity = quantity
+        self.price = price
+
+
+class Portfolio:
+    def __init__(self, investor_name):
+        self.investor_name = investor_name
+        self.stocks = []
+
+    def add_stock(self, symbol, quantity, price):
+        stock = Stock(symbol, quantity, price)
+        self.stocks.append(stock)
+
+    def remove_stock(self, symbol):
+        for stock in self.stocks:
+            if stock.symbol == symbol:
+                self.stocks.remove(stock)
+                break
+
+
+class Investor:
+    def __init__(self, name, portfolio):
+        self.name = name
+        self.portfolio = portfolio
+
+    def buy_stock(self, symbol, quantity, price):
+        self.portfolio.add_stock(symbol, quantity, price)
+
+    def sell_stock(self, symbol):
+        self.portfolio.remove_stock(symbol)
+
+
+class PortfolioManagerApp(Tk):
+    def __init__(self):
+        Tk.__init__(self)
+        self.title("Red - Portfolio Manager")
+
+        self.name_label = Label(self, text="Investor Name:")
+        self.name_label.pack()
+        self.name_entry = Entry(self)
+        self.name_entry.pack()
+
+        self.symbol_label = Label(self, text="Stock Symbol:")
+        self.symbol_label.pack()
+        self.symbol_entry = Entry(self)
+        self.symbol_entry.pack()
+
+        self.quantity_label = Label(self, text="Quantity:")
+        self.quantity_label.pack()
+        self.quantity_entry = Entry(self)
+        self.quantity_entry.pack()
+
+        self.price_label = Label(self, text="Price:")
+        self.price_label.pack()
+        self.price_entry = Entry(self)
+        self.price_entry.pack()
+
+        self.buy_button = Button(self, text="Buy Stock", command=self.buy_stock)
+        self.buy_button.pack()
+
+        self.sell_button = Button(self, text="Sell Stock", command=self.sell_stock)
+        self.sell_button.pack()
+
+        self.display_button = Button(self, text="Display Portfolio Summary", command=self.display_portfolio_summary)
+        self.display_button.pack()
+
+        self.save_button = Button(self, text="Save Portfolio", command=self.save_portfolio_data)
+        self.save_button.pack()
+
+        self.load_button = Button(self, text="Load Portfolio", command=self.load_portfolio_data)
+        self.load_button.pack()
+
+        self.export_button = Button(self, text="Export Portfolio", command=self.export_portfolio)
+        self.export_button.pack()
+
+        self.clear_button = Button(self, text="Clear", command=self.clear_entries)
+        self.clear_button.pack()
+
+        self.investor = None
+
+    def buy_stock(self):
+        name = self.name_entry.get()
+        symbol = self.symbol_entry.get()
+        quantity = int(self.quantity_entry.get())
+        price = float(self.price_entry.get())
+
+        if name and symbol and quantity and price:
+            if not self.investor:
+                portfolio = Portfolio(name)
+                self.investor = Investor(name, portfolio)
+            self.investor.buy_stock(symbol, quantity, price)
+            messagebox.showinfo("Buy Stock", "Stock purchased successfully!")
+        else:
+            messagebox.showerror("Buy Stock", "Please fill in all fields.")
+
+    def sell_stock(self):
+        name = self.name_entry.get()
+        symbol = self.symbol_entry.get()
+
+        if name and symbol:
+            if not self.investor:
+                messagebox.showerror("Sell Stock", "No investor exists. Please buy stocks first.")
+            else:
+                self.investor.sell_stock(symbol)
+                messagebox.showinfo("Sell Stock", "Stock sold successfully!")
+        else:
+            messagebox.showerror("Sell Stock", "Please fill in all fields.")
+
+    def display_portfolio_summary(self):
+        if self.investor:
+            summary = f"Investor: {self.investor.name}\n\nPortfolio Summary:\n"
+            for stock in self.investor.portfolio.stocks:
+                summary += f"Symbol: {stock.symbol}, Quantity: {stock.quantity}, Price: {stock.price}\n"
+            messagebox.showinfo("Portfolio Summary", summary)
+        else:
+            messagebox.showinfo("Portfolio Summary", "No investor or portfolio data.")
+
+    def save_portfolio_data(self):
+        if self.investor:
+            filename = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
+            if filename:
+                with open(filename, "w") as file:
+                    file.write(f"Investor Name: {self.investor.name}\n\n")
+                    file.write("Stocks:\n")
+                    for stock in self.investor.portfolio.stocks:
+                        file.write(f"Symbol: {stock.symbol}, Quantity: {stock.quantity}, Price: {stock.price}\n")
+                messagebox.showinfo("Save Portfolio", "Portfolio data saved successfully!")
+            else:
+                messagebox.showerror("Save Portfolio", "Invalid filename.")
+        else:
+            messagebox.showerror("Save Portfolio", "No investor or portfolio data.")
+
+    def load_portfolio_data(self):
+        filename = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt")])
+        if filename:
+            with open(filename, "r") as file:
+                lines = file.readlines()
+                investor_name = lines[0].strip().split(": ")[-1]
+                portfolio = Portfolio(investor_name)
+                for line in lines[2:]:
+                    stock_info = line.strip().split(", ")
+                    symbol = stock_info[0].split(": ")[-1]
+                    quantity = int(stock_info[1].split(": ")[-1])
+                    price = float(stock_info[2].split(": ")[-1])
+                    portfolio.add_stock(symbol, quantity, price)
+                self.investor = Investor(investor_name, portfolio)
+            messagebox.showinfo("Load Portfolio", "Portfolio loaded successfully!")
+        else:
+            messagebox.showerror("Load Portfolio", "No file selected.")
+
+    def export_portfolio(self):
+        if self.investor:
+            filename = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
+            if filename:
+                with open(filename, "w") as file:
+                    file.write(f"Investor: {self.investor.name}\n\n")
+                    file.write("Portfolio Summary:\n")
+                    for stock in self.investor.portfolio.stocks:
+                        file.write(f"Symbol: {stock.symbol}, Quantity: {stock.quantity}, Price: {stock.price}\n")
+                messagebox.showinfo("Export Portfolio", "Portfolio data exported successfully!")
+            else:
+                messagebox.showerror("Export Portfolio", "Invalid filename.")
+        else:
+            messagebox.showerror("Export Portfolio", "No investor or portfolio data.")
+
+    def clear_entries(self):
+        self.name_entry.delete(0, "end")
+        self.symbol_entry.delete(0, "end")
+        self.quantity_entry.delete(0, "end")
+        self.price_entry.delete(0, "end")
+
+
+if __name__ == "__main__":
+    app = PortfolioManagerApp()
+    app.mainloop()
