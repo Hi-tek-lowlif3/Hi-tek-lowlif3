@@ -85,19 +85,27 @@ class PortfolioManagerApp(Tk):
         self.investor = None
 
     def buy_stock(self):
-        name = self.name_entry.get()
-        symbol = self.symbol_entry.get()
-        quantity = int(self.quantity_entry.get())
-        price = float(self.price_entry.get())
+        name = self.name_entry.get().strip()
+        symbol = self.symbol_entry.get().strip()
+        quantity_text = self.quantity_entry.get().strip()
+        price_text = self.price_entry.get().strip()
 
-        if name and symbol and quantity and price:
-            if not self.investor:
-                portfolio = Portfolio(name)
-                self.investor = Investor(name, portfolio)
-            self.investor.buy_stock(symbol, quantity, price)
-            messagebox.showinfo("Buy Stock", "Stock purchased successfully!")
-        else:
+        if not (name and symbol and quantity_text and price_text):
             messagebox.showerror("Buy Stock", "Please fill in all fields.")
+            return
+
+        try:
+            quantity = int(quantity_text)
+            price = float(price_text)
+        except ValueError:
+            messagebox.showerror("Buy Stock", "Quantity must be an integer and price must be a number.")
+            return
+
+        if not self.investor:
+            portfolio = Portfolio(name)
+            self.investor = Investor(name, portfolio)
+        self.investor.buy_stock(symbol, quantity, price)
+        messagebox.showinfo("Buy Stock", "Stock purchased successfully!")
 
     def sell_stock(self):
         name = self.name_entry.get()
